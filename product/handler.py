@@ -37,4 +37,4 @@ async def get_product(message: Message):
 
 
 @router.message(Command('delete_product'))
-async def delete_product(message: Message): # надо сделать через клаву, чтобы админ нажимал "удалить товар"
+async def delete_product(message: Message): # 123 надо сделать через клаву, чтобы админ нажимал "удалить товар"
