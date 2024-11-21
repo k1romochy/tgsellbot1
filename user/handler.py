@@ -18,4 +18,3 @@ async def get_user_id_first_mess(message: Message):
 
     if message.from_user.id == 5470849504:
         await message.answer(f'Вы авторизовались как администратор', reply_markup=main_admin)
-jj
