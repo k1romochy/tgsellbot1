@@ -24,7 +24,7 @@ async def create_product(message: Message):
                 result.append(item)
 
         await product.add_product(category=str(result[0]), name=str(result[1]), price=int(result[2]),
-                                  desc=str(result[3][:-1]))
+                                  desc=str(result[3]), quantity=int(result[4][:-1]))
         await message.answer('Вы успешно добавили товар!')
     else:
         await message.answer('Вы не обладаете правами для использования этой команды')
