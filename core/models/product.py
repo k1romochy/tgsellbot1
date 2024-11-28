@@ -7,4 +7,4 @@ class Product(Base):
     name: Mapped[str]
     price: Mapped[int]
     description: Mapped[str]
-    model: Mapped[str]
+    category: Mapped[str]
