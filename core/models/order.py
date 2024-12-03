@@ -12,16 +12,19 @@ if TYPE_CHECKING:
 class Order(Base):
     __tablename__ = "order"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.now(),
         default=datetime.now
     )
+
+    user_id: Mapped[int]
+
     products: Mapped[list['Product']] = relationship(
         "Product",
         back_populates="orders",
         secondary="order_product_association"
     )
+
     products_details: Mapped[list['OrderProductAssociation']] = relationship(
         "OrderProductAssociation",
         back_populates="order"

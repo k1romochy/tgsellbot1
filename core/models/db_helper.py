@@ -2,7 +2,11 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from core.models.base import Base
 
-engine = create_async_engine(url='sqlite+aiosqlite:///db.sqlite3')
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+engine = create_async_engine(url=os.getenv('POSTGRES_URL'))
 
 async_session = async_sessionmaker(engine)
 

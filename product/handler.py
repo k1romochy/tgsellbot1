@@ -77,6 +77,7 @@ async def show_product(callback: CallbackQuery):
     product_name = await product.get_name_product_by_id(int(product_id))
     product_price = await product.get_price_by_id(int(product_id))
     product_description = await product.get_description_by_id(int(product_id))
+    product_quantity = await product.get_product_quantity_by_id(int(product_id))
 
     builder = InlineKeyboardBuilder()
     builder.button(text='В корзину', callback_data=f'addcart_{product_id}')
@@ -85,19 +86,39 @@ async def show_product(callback: CallbackQuery):
 
     keyboard = builder.as_markup()
 
-    await callback.message.answer(f'{product_name} Цена: {product_price} \n{product_description}',
+    await callback.message.answer(f'{product_name} Цена: {product_price} \n{product_description} \n Осталось: {product_quantity}',
                                   reply_markup=keyboard)
     await callback.answer()
 
 
 @router.callback_query(F.data.startswith('addcart_'))
+async def get_quantity_to_cart(callback: CallbackQuery):
+    product_id = callback.data.split('addcart_')[1]
+    max_product_quantity = await product.get_product_quantity_by_id(int(product_id))
+
+    builder = InlineKeyboardBuilder()
+    for quan in range(max_product_quantity):
+        while quan < 11:
+            builder.button(text=f'{quan}', callback_data=f'addcartq_{product_id}_{quan}')
+
+    builder.adjust(5)
+    keyboard = builder.as_markup()
+
+    await callback.message.answer('Какое колличество товара вы хотите добавить в корзину?', keyboard=keyboard)
+
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith('addcartq_'))
 async def add_to_cart(callback: CallbackQuery):
     product_id = callback.data.split('addcart_')[1]
     user_id = callback.from_user.id
+    product_quantity = callback.data.split('_')[2]
 
-    await product.add_product_to_cart(product_id=int(product_id), user_id=user_id)
+    await product.add_product_to_cart(product_id=int(product_id), user_id=user_id, product_quantity=int(product_quantity))
 
-    await callback.message.answer('Вы добавили товар в корзину')
+    await callback.message.answer('Вы успешно добавили товар в корзину')
+
     await callback.answer()
 
 
@@ -110,14 +131,71 @@ async def show_cart(message: Message):
     for product_id in product_ids:
         product_name = await product.get_name_product_by_id(product_id)
         builder.button(text=product_name, callback_data=f'cart_{product_id}')
-
+    builder.button(text='Купить продукты', callback_data=f'buyproduct{product_ids}')
     builder.adjust(2)
     keyboard = builder.as_markup()
 
     await message.answer('Выберите продукт', reply_markup=keyboard)
 
 
+@router.callback_query(F.data.startswith('cart_'))
+async def show_product(callback: CallbackQuery):
+    product_id = callback.data.split('product_')[1]
+
+    product_name = await product.get_name_product_by_id(int(product_id))
+    product_price = await product.get_price_by_id(int(product_id))
+    product_description = await product.get_description_by_id(int(product_id))
+    product_quantity = await product.get_product_quantity_by_id(int(product_id))
+
+    builder = InlineKeyboardBuilder()
+    builder.button(text='Назад', callback_data=f'back_to_cart')
+    if callback.from_user.id == 5470849504:
+        builder.button(text='Удалить', callback_data=f'deletefromcart_{product_id}')
+
+    keyboard = builder.as_markup()
+
+    await callback.message.answer(f'{product_name} Цена: {product_price} \n{product_description} \n Осталось: {product_quantity}',
+                                  reply_markup=keyboard)
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith('deletefromcart_'))
+async def delete_product_from_cart(callback: CallbackQuery):
+    product_id = callback.data.split('product_')[1]
+
+    await product.delete_product_from_cart(product_id=int(product_id))
+
+    await callback.message.answer('Вы успешно удалили товар с корзины')
+    await callback.answer()
+
+
+@router.callback_query(F.data('back_to_cart'))
+async def back_to_cart(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    product_ids = await product.get_product_ids_cart(user_id=user_id)
+
+    builder = InlineKeyboardBuilder()
+    for product_id in product_ids:
+        product_name = await product.get_name_product_by_id(product_id)
+        builder.button(text=product_name, callback_data=f'cart_{product_id}')
+    builder.button(text='Купить продукты', callback_data=f'buyproducts_{product_ids}') # тут надо pay юзнуть
+
+    builder.adjust(2)
+    keyboard = builder.as_markup()
+
+    await callback.message.answer('Выберите продукт', reply_markup=keyboard)
+    await callback.answer()
+
+
+# @router.callback_query(F.data.startswith('buyproducts_')) тут pay надо ловить
+# async def buy_product()
+
+
+
 @router.message(Command('testing'))
 async def testing_func(message: Message):
     products = await product.get_products_ids()
     await message.answer(text=f'{products}')
+
+
+# реализовать покупку, убавление колл-ва товаров в корзине
